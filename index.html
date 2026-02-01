@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Fiesta de Cumpleaños! 🎉</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark: #1a1a2e;
+            --accent: #ff6b9d;
+            --light: #f8f9fa;
+            --purple: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 100%);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+
+        /* Music Player Fixed at Top */
+        .music-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid var(--gold);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .music-player button {
+            background: var(--gold);
+            border: none;
+            color: var(--dark);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .music-player button:hover {
+            transform: scale(1.1);
+            background: var(--accent);
+        }
+
+        .music-player input[type="range"] {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .music-player .music-info {
+            font-size: 14px;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 80px auto 0;
+            padding: 40px 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(255, 107, 157, 0.1) 100%);
+            border-radius: 30px;
+            margin-bottom: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '🎉';
+            position: absolute;
+            font-size: 200px;
+            opacity: 0.05;
+            top: -50px;
+            right: -50px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .date-time {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: var(--gold);
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        /* Countdown Timer */
+        .countdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+
+        .countdown-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .countdown-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .countdown-number {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .countdown-label {
+            font-size: 0.9rem;
+            color: var(--gold);
+            margin-top: 5px;
+        }
+
+        /* Section Styling */
+        .section {
+            margin: 60px 0;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            color: var(--gold);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Carousel */
+        .carousel {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 15px;
+        }
+
+        .carousel-container {
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+
+        .carousel-item {
+            min-width: 100%;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--gold);
+        }
+
+        .carousel-item img,
+        .carousel-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .carousel-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .carousel-btn {
+            background: var(--gold);
+            border: none;
+            color: var(--dark);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .carousel-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: var(--gold);
+            transform: scale(1.3);
+        }
+
+        /* Dress Code */
+        .dress-code {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .dress-code-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: var(--light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Contact Card */
+        .contact-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .contact-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid var(--gold);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .contact-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .contact-label {
+            font-size: 0.9rem;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .contact-value {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* Music Suggestions */
+        .music-suggestions-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .suggestion-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .suggestion-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid var(--gold);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .suggestion-input::placeholder {
+            color: rgba(248, 249, 250, 0.5);
+        }
+
+        .submit-btn {
+            padding: 15px 30px;
+            background: var(--gold);
+            border: none;
+            border-radius: 25px;
+            color: var(--dark);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .suggestions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .suggestion-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .suggestion-text {
+            flex: 1;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .delete-btn {
+            background: rgba(255, 107, 157, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: var(--accent);
+            color: var(--dark);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: rgba(248, 249, 250, 0.5);
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .music-player {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .music-player input[type="range"] {
+                width: 100%;
+                max-width: none;
+                order: 3;
+            }
+
+            .container {
+                padding: 20px 15px;
+                margin-top: 100px;
+            }
+
+            .section {
+                padding: 25px 20px;
+            }
+
+            .carousel-item {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Music Player -->
+    <div class="music-player">
+        <button id="playPauseBtn">▶️</button>
+        <div class="music-info">
+            <span>🎵</span>
+            <span>Música de Fiesta</span>
+        </div>
+        <input type="range" id="volumeControl" min="0" max="100" value="70">
+    </div>
+
+    <audio id="backgroundMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>¡Fiesta de Cumpleaños!</h1>
+            <div class="date-time">
+                📅 18 de Diciembre, 2026<br>
+                🕛 00:00 HS
+            </div>
+        </div>
+
+        <!-- Countdown Timer -->
+        <div class="countdown" id="countdown">
+            <div class="countdown-item">
+                <div class="countdown-number" id="days">-</div>
+                <div class="countdown-label">Días</div>
+            </div>
+            <div class="countdown-item">
+                <div class="countdown-number" id="hours">-</div>
+                <div class="countdown-label">Horas</div>
+            </div>
+            <div class="countdown-item">
+                <div class="countdown-number" id="minutes">-</div>
+                <div class="countdown-label">Minutos</div>
+            </div>
+            <div class="countdown-item">
+                <div class="countdown-number" id="seconds">-</div>
+                <div class="countdown-label">Segundos</div>
+            </div>
+        </div>
+
+        <!-- Carousel Section -->
+        <div class="section">
+            <h2 class="section-title">📸 Fotos y Videos</h2>
+            <div class="carousel">
+                <div class="carousel-container" id="carouselContainer">
+                    <div class="carousel-item">
+                        <span>🎉 Sube tus fotos aquí</span>
+                    </div>
+                    <div class="carousel-item">
+                        <span>🎊 Momento 2</span>
+                    </div>
+                    <div class="carousel-item">
+                        <span>🎈 Momento 3</span>
+                    </div>
+                    <!-- Aquí puedes agregar más items con <img> o <video> tags -->
+                </div>
+            </div>
+            <div class="carousel-controls">
+                <button class="carousel-btn" id="prevBtn">←</button>
+                <button class="carousel-btn" id="nextBtn">→</button>
+            </div>
+            <div class="carousel-dots" id="carouselDots"></div>
+        </div>
+
+        <!-- Dress Code Section -->
+        <div class="section">
+            <h2 class="section-title">👔 Código de Vestimenta</h2>
+            <div class="dress-code">
+                <p class="dress-code-text">
+                    <strong>Elegante Casual</strong><br><br>
+                    Vení cómodo pero con estilo. Queremos que te sientas increíble mientras bailás toda la noche. 
+                    ¡Lo importante es que vengas con la mejor onda! ✨
+                </p>
+            </div>
+        </div>
+
+        <!-- Contact Card Section -->
+        <div class="section">
+            <h2 class="section-title">📞 Contacto</h2>
+            <div class="contact-card">
+                <div class="contact-item">
+                    <div class="contact-icon">📱</div>
+                    <div class="contact-label">Teléfono</div>
+                    <div class="contact-value">+54 9 261 123-4567</div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">📧</div>
+                    <div class="contact-label">Email</div>
+                    <div class="contact-value">fiesta@cumple.com</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Music Suggestions Section -->
+        <div class="section">
+            <h2 class="section-title">🎵 Sugerencias Musicales</h2>
+            <div class="music-suggestions-container">
+                <div class="suggestion-form">
+                    <input 
+                        type="text" 
+                        id="suggestionInput" 
+                        class="suggestion-input" 
+                        placeholder="¿Qué canción no puede faltar en la fiesta?"
+                        maxlength="150"
+                    >
+                    <button class="submit-btn" id="submitSuggestion">Enviar</button>
+                </div>
+                <div class="suggestions-list" id="suggestionsList">
+                    <div class="empty-state">
+                        Sé el primero en sugerir una canción 🎶
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Music Player
+        const audio = document.getElementById('backgroundMusic');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const volumeControl = document.getElementById('volumeControl');
+
+        // Auto-play on load (with user interaction fallback)
+        window.addEventListener('load', () => {
+            audio.volume = 0.7;
+            audio.play().catch(() => {
+                // If autoplay is blocked, wait for user interaction
+                document.addEventListener('click', () => {
+                    audio.play();
+                    playPauseBtn.textContent = '⏸️';
+                }, { once: true });
+            });
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                playPauseBtn.textContent = '⏸️';
+            } else {
+                audio.pause();
+                playPauseBtn.textContent = '▶️';
+            }
+        });
+
+        volumeControl.addEventListener('input', (e) => {
+            audio.volume = e.target.value / 100;
+        });
+
+        // Countdown Timer
+        const countdownDate = new Date('2026-12-18T00:00:00').getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = countdownDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('days').textContent = days;
+            document.getElementById('hours').textContent = hours;
+            document.getElementById('minutes').textContent = minutes;
+            document.getElementById('seconds').textContent = seconds;
+
+            if (distance < 0) {
+                document.getElementById('countdown').innerHTML = '<h2 style="text-align: center; color: var(--gold);">¡Es hoy! 🎉</h2>';
+            }
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Carousel
+        const carouselContainer = document.getElementById('carouselContainer');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const dotsContainer = document.getElementById('carouselDots');
+        
+        let currentIndex = 0;
+        const items = document.querySelectorAll('.carousel-item');
+        const totalItems = items.length;
+
+        // Create dots
+        items.forEach((_, index) => {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (index === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(index));
+            dotsContainer.appendChild(dot);
+        });
+
+        function updateCarousel() {
+            carouselContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+            
+            // Update dots
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function goToSlide(index) {
+            currentIndex = index;
+            updateCarousel();
+        }
+
+        prevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+            updateCarousel();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % totalItems;
+            updateCarousel();
+        });
+
+        // Auto-advance carousel every 5 seconds
+        setInterval(() => {
+            currentIndex = (currentIndex + 1) % totalItems;
+            updateCarousel();
+        }, 5000);
+
+        // Music Suggestions with Persistent Storage
+        const suggestionInput = document.getElementById('suggestionInput');
+        const submitBtn = document.getElementById('submitSuggestion');
+        const suggestionsList = document.getElementById('suggestionsList');
+
+        // Generate unique user ID
+        function getUserId() {
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('userId', userId);
+            }
+            return userId;
+        }
+
+        const currentUserId = getUserId();
+
+        // Load suggestions
+        async function loadSuggestions() {
+            try {
+                const result = await window.storage.list('suggestion:', true);
+                
+                if (!result || !result.keys || result.keys.length === 0) {
+                    suggestionsList.innerHTML = '<div class="empty-state">Sé el primero en sugerir una canción 🎶</div>';
+                    return;
+                }
+
+                suggestionsList.innerHTML = '';
+                
+                // Load all suggestions
+                const suggestions = [];
+                for (const key of result.keys) {
+                    try {
+                        const data = await window.storage.get(key, true);
+                        if (data && data.value) {
+                            const suggestion = JSON.parse(data.value);
+                            suggestions.push({ key, ...suggestion });
+                        }
+                    } catch (e) {
+                        console.log('Key not found or error:', key);
+                    }
+                }
+
+                // Sort by timestamp (newest first)
+                suggestions.sort((a, b) => b.timestamp - a.timestamp);
+
+                // Display suggestions
+                suggestions.forEach(({ key, text, userId, timestamp }) => {
+                    const item = document.createElement('div');
+                    item.classList.add('suggestion-item');
+                    
+                    const textDiv = document.createElement('div');
+                    textDiv.classList.add('suggestion-text');
+                    textDiv.textContent = text;
+                    
+                    item.appendChild(textDiv);
+
+                    // Only show delete button if this is the user's own suggestion
+                    if (userId === currentUserId) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.classList.add('delete-btn');
+                        deleteBtn.textContent = 'Borrar';
+                        deleteBtn.addEventListener('click', () => deleteSuggestion(key));
+                        item.appendChild(deleteBtn);
+                    }
+
+                    suggestionsList.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error('Error loading suggestions:', error);
+                suggestionsList.innerHTML = '<div class="empty-state">Sé el primero en sugerir una canción 🎶</div>';
+            }
+        }
+
+        // Add suggestion
+        async function addSuggestion() {
+            const text = suggestionInput.value.trim();
+            
+            if (!text) return;
+
+            try {
+                const suggestionId = 'suggestion:' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const suggestionData = {
+                    text,
+                    userId: currentUserId,
+                    timestamp: Date.now()
+                };
+
+                const result = await window.storage.set(suggestionId, JSON.stringify(suggestionData), true);
+                
+                if (result) {
+                    suggestionInput.value = '';
+                    await loadSuggestions();
+                } else {
+                    alert('Error al guardar la sugerencia. Por favor, intenta de nuevo.');
+                }
+            } catch (error) {
+                console.error('Error adding suggestion:', error);
+                alert('Error al guardar la sugerencia. Por favor, intenta de nuevo.');
+            }
+        }
+
+        // Delete suggestion
+        async function deleteSuggestion(key) {
+            if (!confirm('¿Estás seguro de que querés borrar esta sugerencia?')) return;
+
+            try {
+                await window.storage.delete(key, true);
+                await loadSuggestions();
+            } catch (error) {
+                console.error('Error deleting suggestion:', error);
+                alert('Error al borrar la sugerencia. Por favor, intenta de nuevo.');
+            }
+        }
+
+        submitBtn.addEventListener('click', addSuggestion);
+        suggestionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addSuggestion();
+        });
+
+        // Load suggestions on page load
+        loadSuggestions();
+
+        // Reload suggestions every 10 seconds to see updates from other users
+        setInterval(loadSuggestions, 10000);
+    </script>
+</body>
+</html>
