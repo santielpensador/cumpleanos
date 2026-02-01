@@ -332,15 +332,24 @@
 
         .suggestion-form {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             margin-bottom: 30px;
+            align-items: flex-end;
         }
 
-        .suggestion-input {
+        .form-group {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .suggestion-input,
+        .name-input {
+            width: 100%;
             padding: 15px 20px;
             border: 2px solid var(--gold);
-            border-radius: 25px;
+            border-radius: 15px;
             background: rgba(255, 255, 255, 0.05);
             color: var(--light);
             font-size: 1rem;
@@ -348,13 +357,25 @@
             transition: all 0.3s ease;
         }
 
-        .suggestion-input:focus {
+        .suggestion-input {
+            border-radius: 15px 15px 0 0;
+        }
+
+        .name-input {
+            border-radius: 0 0 15px 15px;
+            border-top: none;
+            font-size: 0.9rem;
+        }
+
+        .suggestion-input:focus,
+        .name-input:focus {
             outline: none;
             background: rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
         }
 
-        .suggestion-input::placeholder {
+        .suggestion-input::placeholder,
+        .name-input::placeholder {
             color: rgba(248, 249, 250, 0.5);
         }
 
@@ -368,6 +389,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 1rem;
+            height: fit-content;
         }
 
         .submit-btn:hover {
@@ -387,8 +409,8 @@
             border-radius: 15px;
             border: 1px solid rgba(212, 175, 55, 0.3);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            gap: 15px;
+            align-items: flex-start;
             animation: fadeIn 0.5s ease;
         }
 
@@ -403,10 +425,38 @@
             }
         }
 
-        .suggestion-text {
+        .suggestion-avatar {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .suggestion-content {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .suggestion-name {
+            font-size: 0.85rem;
+            color: var(--gold);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .suggestion-text {
             font-size: 1rem;
             line-height: 1.5;
+            color: var(--light);
         }
 
         .delete-btn {
@@ -418,6 +468,8 @@
             cursor: pointer;
             font-size: 0.9rem;
             transition: all 0.3s ease;
+            align-self: flex-start;
+            margin-top: 5px;
         }
 
         .delete-btn:hover {
@@ -553,7 +605,7 @@
                 <div class="contact-item">
                     <div class="contact-icon">📧</div>
                     <div class="contact-label">Email</div>
-                    <div class="contact-value">fiesta@cumple.com</div>
+                    <div class="contact-value"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="214748445255406142544c514d440f424e4c">[email&#160;protected]</a></div>
                 </div>
             </div>
         </div>
@@ -563,13 +615,22 @@
             <h2 class="section-title">🎵 Sugerencias Musicales</h2>
             <div class="music-suggestions-container">
                 <div class="suggestion-form">
-                    <input 
-                        type="text" 
-                        id="suggestionInput" 
-                        class="suggestion-input" 
-                        placeholder="¿Qué canción no puede faltar en la fiesta?"
-                        maxlength="150"
-                    >
+                    <div class="form-group">
+                        <input 
+                            type="text" 
+                            id="suggestionInput" 
+                            class="suggestion-input" 
+                            placeholder="¿Qué canción no puede faltar en la fiesta?"
+                            maxlength="150"
+                        >
+                        <input 
+                            type="text" 
+                            id="nameInput" 
+                            class="name-input" 
+                            placeholder="A nombre de:"
+                            maxlength="50"
+                        >
+                    </div>
                     <button class="submit-btn" id="submitSuggestion">Enviar</button>
                 </div>
                 <div class="suggestions-list" id="suggestionsList">
@@ -581,7 +642,7 @@
         </div>
     </div>
 
-    <script type="module">
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
         // Firebase Configuration
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
@@ -765,6 +826,7 @@
 
         // Music Suggestions with Firebase Firestore
         const suggestionInput = document.getElementById('suggestionInput');
+        const nameInput = document.getElementById('nameInput');
         const submitBtn = document.getElementById('submitSuggestion');
         const suggestionsList = document.getElementById('suggestionsList');
 
@@ -779,6 +841,21 @@
         }
 
         const currentUserId = getUserId();
+
+        // Load saved name from localStorage
+        const savedName = localStorage.getItem('userName');
+        if (savedName) {
+            nameInput.value = savedName;
+        }
+
+        // Array of emojis for random avatars
+        const avatarEmojis = ['🎵', '🎸', '🎤', '🎧', '🎹', '🥁', '🎺', '🎻', '🎷', '🪕', '🎼', '🔊', '💃', '🕺', '🎉', '🎊', '✨', '⭐', '🌟', '💫'];
+
+        // Generate consistent emoji based on user ID
+        function getEmojiForUser(userId) {
+            const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            return avatarEmojis[hash % avatarEmojis.length];
+        }
 
         // Load suggestions from Firebase with real-time updates
         function loadSuggestions() {
@@ -799,11 +876,31 @@
                     const item = document.createElement('div');
                     item.classList.add('suggestion-item');
                     
+                    // Avatar
+                    const avatar = document.createElement('div');
+                    avatar.classList.add('suggestion-avatar');
+                    avatar.textContent = getEmojiForUser(suggestion.userId);
+                    item.appendChild(avatar);
+
+                    // Content container
+                    const content = document.createElement('div');
+                    content.classList.add('suggestion-content');
+
+                    // Name
+                    if (suggestion.name) {
+                        const nameDiv = document.createElement('div');
+                        nameDiv.classList.add('suggestion-name');
+                        nameDiv.textContent = suggestion.name;
+                        content.appendChild(nameDiv);
+                    }
+
+                    // Text
                     const textDiv = document.createElement('div');
                     textDiv.classList.add('suggestion-text');
                     textDiv.textContent = suggestion.text;
-                    
-                    item.appendChild(textDiv);
+                    content.appendChild(textDiv);
+
+                    item.appendChild(content);
 
                     // Only show delete button if this is the user's own suggestion
                     if (suggestion.userId === currentUserId) {
@@ -825,17 +922,31 @@
         // Add suggestion to Firebase
         async function addSuggestion() {
             const text = suggestionInput.value.trim();
+            const name = nameInput.value.trim();
             
-            if (!text) return;
+            if (!text) {
+                alert('Por favor, escribí una sugerencia musical');
+                return;
+            }
+
+            if (!name) {
+                alert('Por favor, escribí tu nombre');
+                return;
+            }
 
             try {
+                // Save name to localStorage for future use
+                localStorage.setItem('userName', name);
+
                 await addDoc(collection(db, 'suggestions'), {
                     text: text,
+                    name: name,
                     userId: currentUserId,
                     timestamp: Date.now()
                 });
                 
                 suggestionInput.value = '';
+                // Keep the name for next suggestion
             } catch (error) {
                 console.error('Error adding suggestion:', error);
                 alert('Error al guardar la sugerencia. Por favor, intenta de nuevo.');
@@ -856,7 +967,16 @@
 
         submitBtn.addEventListener('click', addSuggestion);
         suggestionInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addSuggestion();
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                addSuggestion();
+            }
+        });
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                suggestionInput.focus();
+            }
         });
 
         // Load suggestions on page load (with real-time updates)
