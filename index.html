@@ -581,7 +581,24 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // Firebase Configuration
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9AQK8srw5lx-vGOMHmEpQojX1ty4lOc0",
+            authDomain: "cumpleanos-f171b.firebaseapp.com",
+            projectId: "cumpleanos-f171b",
+            storageBucket: "cumpleanos-f171b.firebasestorage.app",
+            messagingSenderId: "999428476590",
+            appId: "1:999428476590:web:322dea8d8e4128e9a3273f"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // Music Player
         const audio = document.getElementById('backgroundMusic');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -612,7 +629,6 @@
                             audio.play().then(() => {
                                 playPauseBtn.textContent = '⏸️';
                             });
-                            // Remove all listeners after first interaction
                             document.removeEventListener('click', startOnInteraction);
                             document.removeEventListener('touchstart', startOnInteraction);
                             document.removeEventListener('keydown', startOnInteraction);
@@ -734,22 +750,20 @@
         }, { passive: true });
 
         function handleSwipe() {
-            const swipeThreshold = 50; // Minimum distance for swipe
+            const swipeThreshold = 50;
             
             if (touchStartX - touchEndX > swipeThreshold) {
-                // Swipe left - next slide
                 currentIndex = (currentIndex + 1) % totalItems;
                 updateCarousel();
             }
             
             if (touchEndX - touchStartX > swipeThreshold) {
-                // Swipe right - previous slide
                 currentIndex = (currentIndex - 1 + totalItems) % totalItems;
                 updateCarousel();
             }
         }
 
-        // Music Suggestions with localStorage
+        // Music Suggestions with Firebase Firestore
         const suggestionInput = document.getElementById('suggestionInput');
         const submitBtn = document.getElementById('submitSuggestion');
         const suggestionsList = document.getElementById('suggestionsList');
@@ -766,84 +780,78 @@
 
         const currentUserId = getUserId();
 
-        // Get all suggestions from localStorage
-        function getAllSuggestions() {
-            const suggestions = localStorage.getItem('suggestions');
-            return suggestions ? JSON.parse(suggestions) : [];
-        }
-
-        // Save all suggestions to localStorage
-        function saveAllSuggestions(suggestions) {
-            localStorage.setItem('suggestions', JSON.stringify(suggestions));
-        }
-
-        // Load suggestions
+        // Load suggestions from Firebase with real-time updates
         function loadSuggestions() {
-            const suggestions = getAllSuggestions();
+            const q = query(collection(db, 'suggestions'), orderBy('timestamp', 'desc'));
             
-            if (suggestions.length === 0) {
-                suggestionsList.innerHTML = '<div class="empty-state">Sé el primero en sugerir una canción 🎶</div>';
-                return;
-            }
-
-            suggestionsList.innerHTML = '';
-            
-            // Sort by timestamp (newest first)
-            suggestions.sort((a, b) => b.timestamp - a.timestamp);
-
-            // Display suggestions
-            suggestions.forEach((suggestion) => {
-                const item = document.createElement('div');
-                item.classList.add('suggestion-item');
-                
-                const textDiv = document.createElement('div');
-                textDiv.classList.add('suggestion-text');
-                textDiv.textContent = suggestion.text;
-                
-                item.appendChild(textDiv);
-
-                // Only show delete button if this is the user's own suggestion
-                if (suggestion.userId === currentUserId) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.classList.add('delete-btn');
-                    deleteBtn.textContent = 'Borrar';
-                    deleteBtn.addEventListener('click', () => deleteSuggestion(suggestion.id));
-                    item.appendChild(deleteBtn);
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    suggestionsList.innerHTML = '<div class="empty-state">Sé el primero en sugerir una canción 🎶</div>';
+                    return;
                 }
 
-                suggestionsList.appendChild(item);
+                suggestionsList.innerHTML = '';
+
+                snapshot.forEach((docSnapshot) => {
+                    const suggestion = docSnapshot.data();
+                    const suggestionId = docSnapshot.id;
+
+                    const item = document.createElement('div');
+                    item.classList.add('suggestion-item');
+                    
+                    const textDiv = document.createElement('div');
+                    textDiv.classList.add('suggestion-text');
+                    textDiv.textContent = suggestion.text;
+                    
+                    item.appendChild(textDiv);
+
+                    // Only show delete button if this is the user's own suggestion
+                    if (suggestion.userId === currentUserId) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.classList.add('delete-btn');
+                        deleteBtn.textContent = 'Borrar';
+                        deleteBtn.addEventListener('click', () => deleteSuggestion(suggestionId));
+                        item.appendChild(deleteBtn);
+                    }
+
+                    suggestionsList.appendChild(item);
+                });
+            }, (error) => {
+                console.error('Error loading suggestions:', error);
+                suggestionsList.innerHTML = '<div class="empty-state">Error al cargar sugerencias. Recargá la página.</div>';
             });
         }
 
-        // Add suggestion
-        function addSuggestion() {
+        // Add suggestion to Firebase
+        async function addSuggestion() {
             const text = suggestionInput.value.trim();
             
             if (!text) return;
 
-            const suggestions = getAllSuggestions();
-            const newSuggestion = {
-                id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                text,
-                userId: currentUserId,
-                timestamp: Date.now()
-            };
-
-            suggestions.push(newSuggestion);
-            saveAllSuggestions(suggestions);
-            
-            suggestionInput.value = '';
-            loadSuggestions();
+            try {
+                await addDoc(collection(db, 'suggestions'), {
+                    text: text,
+                    userId: currentUserId,
+                    timestamp: Date.now()
+                });
+                
+                suggestionInput.value = '';
+            } catch (error) {
+                console.error('Error adding suggestion:', error);
+                alert('Error al guardar la sugerencia. Por favor, intenta de nuevo.');
+            }
         }
 
-        // Delete suggestion
-        function deleteSuggestion(suggestionId) {
+        // Delete suggestion from Firebase
+        async function deleteSuggestion(suggestionId) {
             if (!confirm('¿Estás seguro de que querés borrar esta sugerencia?')) return;
 
-            const suggestions = getAllSuggestions();
-            const filteredSuggestions = suggestions.filter(s => s.id !== suggestionId);
-            saveAllSuggestions(filteredSuggestions);
-            loadSuggestions();
+            try {
+                await deleteDoc(doc(db, 'suggestions', suggestionId));
+            } catch (error) {
+                console.error('Error deleting suggestion:', error);
+                alert('Error al borrar la sugerencia. Por favor, intenta de nuevo.');
+            }
         }
 
         submitBtn.addEventListener('click', addSuggestion);
@@ -851,7 +859,7 @@
             if (e.key === 'Enter') addSuggestion();
         });
 
-        // Load suggestions on page load
+        // Load suggestions on page load (with real-time updates)
         loadSuggestions();
     </script>
 </body>
