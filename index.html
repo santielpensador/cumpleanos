@@ -587,17 +587,50 @@
         const playPauseBtn = document.getElementById('playPauseBtn');
         const volumeControl = document.getElementById('volumeControl');
 
-        // Auto-play on load (with user interaction fallback)
-        window.addEventListener('load', () => {
-            audio.volume = 0.7;
-            audio.play().catch(() => {
-                // If autoplay is blocked, wait for user interaction
-                document.addEventListener('click', () => {
-                    audio.play();
+        // Set initial volume
+        audio.volume = 0.7;
+        
+        // Try to play immediately when the page loads
+        function tryAutoplay() {
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
                     playPauseBtn.textContent = '⏸️';
-                }, { once: true });
-            });
-        });
+                }).catch(() => {
+                    // Strategy 1: Try with muted first, then unmute
+                    audio.muted = true;
+                    audio.play().then(() => {
+                        setTimeout(() => {
+                            audio.muted = false;
+                            playPauseBtn.textContent = '⏸️';
+                        }, 100);
+                    }).catch(() => {
+                        // Strategy 2: Wait for any user interaction
+                        const startOnInteraction = () => {
+                            audio.muted = false;
+                            audio.play().then(() => {
+                                playPauseBtn.textContent = '⏸️';
+                            });
+                            // Remove all listeners after first interaction
+                            document.removeEventListener('click', startOnInteraction);
+                            document.removeEventListener('touchstart', startOnInteraction);
+                            document.removeEventListener('keydown', startOnInteraction);
+                        };
+                        
+                        document.addEventListener('click', startOnInteraction, { once: true });
+                        document.addEventListener('touchstart', startOnInteraction, { once: true });
+                        document.addEventListener('keydown', startOnInteraction, { once: true });
+                    });
+                });
+            }
+        }
+
+        // Try autoplay immediately
+        tryAutoplay();
+        
+        // Also try when page is fully loaded
+        window.addEventListener('load', tryAutoplay);
 
         playPauseBtn.addEventListener('click', () => {
             if (audio.paused) {
@@ -687,7 +720,36 @@
             updateCarousel();
         }, 5000);
 
-        // Music Suggestions with Persistent Storage
+        // Touch/Swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        carouselContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        carouselContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const swipeThreshold = 50; // Minimum distance for swipe
+            
+            if (touchStartX - touchEndX > swipeThreshold) {
+                // Swipe left - next slide
+                currentIndex = (currentIndex + 1) % totalItems;
+                updateCarousel();
+            }
+            
+            if (touchEndX - touchStartX > swipeThreshold) {
+                // Swipe right - previous slide
+                currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+                updateCarousel();
+            }
+        }
+
+        // Music Suggestions with localStorage
         const suggestionInput = document.getElementById('suggestionInput');
         const submitBtn = document.getElementById('submitSuggestion');
         const suggestionsList = document.getElementById('suggestionsList');
@@ -704,103 +766,84 @@
 
         const currentUserId = getUserId();
 
+        // Get all suggestions from localStorage
+        function getAllSuggestions() {
+            const suggestions = localStorage.getItem('suggestions');
+            return suggestions ? JSON.parse(suggestions) : [];
+        }
+
+        // Save all suggestions to localStorage
+        function saveAllSuggestions(suggestions) {
+            localStorage.setItem('suggestions', JSON.stringify(suggestions));
+        }
+
         // Load suggestions
-        async function loadSuggestions() {
-            try {
-                const result = await window.storage.list('suggestion:', true);
-                
-                if (!result || !result.keys || result.keys.length === 0) {
-                    suggestionsList.innerHTML = '<div class="empty-state">Sé el primero en sugerir una canción 🎶</div>';
-                    return;
-                }
-
-                suggestionsList.innerHTML = '';
-                
-                // Load all suggestions
-                const suggestions = [];
-                for (const key of result.keys) {
-                    try {
-                        const data = await window.storage.get(key, true);
-                        if (data && data.value) {
-                            const suggestion = JSON.parse(data.value);
-                            suggestions.push({ key, ...suggestion });
-                        }
-                    } catch (e) {
-                        console.log('Key not found or error:', key);
-                    }
-                }
-
-                // Sort by timestamp (newest first)
-                suggestions.sort((a, b) => b.timestamp - a.timestamp);
-
-                // Display suggestions
-                suggestions.forEach(({ key, text, userId, timestamp }) => {
-                    const item = document.createElement('div');
-                    item.classList.add('suggestion-item');
-                    
-                    const textDiv = document.createElement('div');
-                    textDiv.classList.add('suggestion-text');
-                    textDiv.textContent = text;
-                    
-                    item.appendChild(textDiv);
-
-                    // Only show delete button if this is the user's own suggestion
-                    if (userId === currentUserId) {
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.classList.add('delete-btn');
-                        deleteBtn.textContent = 'Borrar';
-                        deleteBtn.addEventListener('click', () => deleteSuggestion(key));
-                        item.appendChild(deleteBtn);
-                    }
-
-                    suggestionsList.appendChild(item);
-                });
-
-            } catch (error) {
-                console.error('Error loading suggestions:', error);
+        function loadSuggestions() {
+            const suggestions = getAllSuggestions();
+            
+            if (suggestions.length === 0) {
                 suggestionsList.innerHTML = '<div class="empty-state">Sé el primero en sugerir una canción 🎶</div>';
+                return;
             }
+
+            suggestionsList.innerHTML = '';
+            
+            // Sort by timestamp (newest first)
+            suggestions.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Display suggestions
+            suggestions.forEach((suggestion) => {
+                const item = document.createElement('div');
+                item.classList.add('suggestion-item');
+                
+                const textDiv = document.createElement('div');
+                textDiv.classList.add('suggestion-text');
+                textDiv.textContent = suggestion.text;
+                
+                item.appendChild(textDiv);
+
+                // Only show delete button if this is the user's own suggestion
+                if (suggestion.userId === currentUserId) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.classList.add('delete-btn');
+                    deleteBtn.textContent = 'Borrar';
+                    deleteBtn.addEventListener('click', () => deleteSuggestion(suggestion.id));
+                    item.appendChild(deleteBtn);
+                }
+
+                suggestionsList.appendChild(item);
+            });
         }
 
         // Add suggestion
-        async function addSuggestion() {
+        function addSuggestion() {
             const text = suggestionInput.value.trim();
             
             if (!text) return;
 
-            try {
-                const suggestionId = 'suggestion:' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                const suggestionData = {
-                    text,
-                    userId: currentUserId,
-                    timestamp: Date.now()
-                };
+            const suggestions = getAllSuggestions();
+            const newSuggestion = {
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                text,
+                userId: currentUserId,
+                timestamp: Date.now()
+            };
 
-                const result = await window.storage.set(suggestionId, JSON.stringify(suggestionData), true);
-                
-                if (result) {
-                    suggestionInput.value = '';
-                    await loadSuggestions();
-                } else {
-                    alert('Error al guardar la sugerencia. Por favor, intenta de nuevo.');
-                }
-            } catch (error) {
-                console.error('Error adding suggestion:', error);
-                alert('Error al guardar la sugerencia. Por favor, intenta de nuevo.');
-            }
+            suggestions.push(newSuggestion);
+            saveAllSuggestions(suggestions);
+            
+            suggestionInput.value = '';
+            loadSuggestions();
         }
 
         // Delete suggestion
-        async function deleteSuggestion(key) {
+        function deleteSuggestion(suggestionId) {
             if (!confirm('¿Estás seguro de que querés borrar esta sugerencia?')) return;
 
-            try {
-                await window.storage.delete(key, true);
-                await loadSuggestions();
-            } catch (error) {
-                console.error('Error deleting suggestion:', error);
-                alert('Error al borrar la sugerencia. Por favor, intenta de nuevo.');
-            }
+            const suggestions = getAllSuggestions();
+            const filteredSuggestions = suggestions.filter(s => s.id !== suggestionId);
+            saveAllSuggestions(filteredSuggestions);
+            loadSuggestions();
         }
 
         submitBtn.addEventListener('click', addSuggestion);
@@ -810,9 +853,6 @@
 
         // Load suggestions on page load
         loadSuggestions();
-
-        // Reload suggestions every 10 seconds to see updates from other users
-        setInterval(loadSuggestions, 10000);
     </script>
 </body>
 </html>
